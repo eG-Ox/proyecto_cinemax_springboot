@@ -22,6 +22,8 @@ class CuentaAccesoInicializadorTests {
         assertThat(cuenta.getUsuario()).isEqualTo("admin");
         assertThat(cuenta.getPasswordHash()).startsWith("$2a$12$").isNotEqualTo(password);
         assertThat(encoder.matches(password, cuenta.getPasswordHash())).isTrue();
+        String serializada = tools.jackson.databind.json.JsonMapper.builder().build().writeValueAsString(cuenta);
+        assertThat(serializada).doesNotContain(password, cuenta.getPasswordHash(), "passwordHash");
     }
 
     @Test void noCreaUnaCuentaConClavePredeterminada() {

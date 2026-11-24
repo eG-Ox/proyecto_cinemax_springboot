@@ -19,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy;
 import tools.jackson.databind.ObjectMapper;
 
 @Configuration
@@ -45,6 +46,9 @@ public class SecurityConfig {
             .authenticationProvider(provider)
             .cors(Customizer.withDefaults())
             .csrf(Customizer.withDefaults())
+            .headers(headers -> headers
+                .contentSecurityPolicy(csp -> csp.policyDirectives("frame-ancestors 'none'; object-src 'none'; base-uri 'self'"))
+                .referrerPolicy(referrer -> referrer.policy(ReferrerPolicy.NO_REFERRER)))
             .addFilterBefore(new LimiteLoginFilter(limite, mapper), UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(new CuentaVigenteFilter(cuentas, mapper), AuthorizationFilter.class)
             .requestCache(AbstractHttpConfigurer::disable)

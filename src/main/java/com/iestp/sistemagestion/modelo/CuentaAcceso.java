@@ -1,5 +1,6 @@
 package com.iestp.sistemagestion.modelo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -32,6 +33,7 @@ public class CuentaAcceso {
 
     public Long getId() { return id; }
     public String getUsuario() { return usuario; }
+    @JsonIgnore
     public String getPasswordHash() { return passwordHash; }
     public boolean isHabilitada() { return habilitada; }
     public void setHabilitada(boolean habilitada) { this.habilitada = habilitada; }
