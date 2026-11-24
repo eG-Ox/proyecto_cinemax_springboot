@@ -4,6 +4,13 @@ CREATE TABLE IF NOT EXISTS usuario (
     correo TEXT UNIQUE NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS cuenta_acceso (
+    id BIGSERIAL PRIMARY KEY,
+    usuario VARCHAR(50) UNIQUE NOT NULL,
+    password_hash VARCHAR(100) NOT NULL,
+    habilitada BOOLEAN NOT NULL DEFAULT TRUE
+);
+
 CREATE TABLE IF NOT EXISTS pelicula (
     id_pelicula SERIAL PRIMARY KEY,
     titulo TEXT NOT NULL,
