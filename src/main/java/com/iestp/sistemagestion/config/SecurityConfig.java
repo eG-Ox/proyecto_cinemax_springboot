@@ -4,6 +4,7 @@ import com.iestp.sistemagestion.schemas.SesionDTO;
 import com.iestp.sistemagestion.servicio.CuentaAccesoService;
 import jakarta.servlet.DispatcherType;
 import java.util.Map;
+import java.time.Clock;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -18,6 +19,11 @@ import tools.jackson.databind.ObjectMapper;
 
 @Configuration
 public class SecurityConfig {
+    @Bean
+    public Clock securityClock() {
+        return Clock.systemUTC();
+    }
+
     @Bean
     public DaoAuthenticationProvider authenticationProvider(CuentaAccesoService cuentas,
             PasswordEncoder encoder) {
