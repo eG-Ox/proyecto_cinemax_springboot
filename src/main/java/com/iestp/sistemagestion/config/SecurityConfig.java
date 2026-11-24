@@ -2,6 +2,7 @@ package com.iestp.sistemagestion.config;
 
 import com.iestp.sistemagestion.schemas.SesionDTO;
 import com.iestp.sistemagestion.servicio.CuentaAccesoService;
+import com.iestp.sistemagestion.servicio.LimitadorIntentosService;
 import jakarta.servlet.DispatcherType;
 import java.util.Map;
 import java.time.Clock;
@@ -15,6 +16,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import tools.jackson.databind.ObjectMapper;
 
 @Configuration
@@ -35,11 +37,12 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-            DaoAuthenticationProvider provider, ObjectMapper mapper) {
+            DaoAuthenticationProvider provider, ObjectMapper mapper, LimitadorIntentosService limite) {
         http
             .authenticationProvider(provider)
             .cors(Customizer.withDefaults())
             .csrf(Customizer.withDefaults())
+            .addFilterBefore(new LimiteLoginFilter(limite, mapper), UsernamePasswordAuthenticationFilter.class)
             .requestCache(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
@@ -60,8 +63,10 @@ public class SecurityConfig {
                 .loginProcessingUrl("/api/auth/login")
                 .usernameParameter("usuario")
                 .passwordParameter("contrasena")
-                .successHandler((request, response, authentication) ->
-                    RespuestaSeguridad.escribir(mapper, response, 200, SesionDTO.fromAuthentication(authentication)))
+                .successHandler((request, response, authentication) -> {
+                    limite.restablecer(request.getRemoteAddr());
+                    RespuestaSeguridad.escribir(mapper, response, 200, SesionDTO.fromAuthentication(authentication));
+                })
                 .failureHandler((request, response, ex) ->
                     RespuestaSeguridad.error(mapper, response, 401, "Usuario o contrasena incorrectos")))
             .logout(logout -> logout

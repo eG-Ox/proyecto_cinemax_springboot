@@ -19,7 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
     "spring.datasource.password=",
     "spring.jpa.hibernate.ddl-auto=create-drop",
     "cinemax.security.admin.username=adminprueba",
-    "cinemax.security.admin.password=ClaveDePrueba-2026"
+    "cinemax.security.admin.password=ClaveDePrueba-2026",
+    "cinemax.security.login.max-attempts=100"
 })
 class AutenticacionTests {
     @Value("${local.server.port}") int port;
@@ -100,5 +101,22 @@ class AutenticacionTests {
             Map.of("Origin", "https://otro-sitio.example", "Access-Control-Request-Method", "POST"));
         assertThat(externo.status()).isEqualTo(403);
         assertThat(externo.headers().firstValue("access-control-allow-origin")).isEmpty();
+    }
+
+    @Test void rechazaClavesQueSuperanElLimiteDeBCrypt() throws Exception {
+        assertThat(client.login("adminprueba", "a".repeat(73)).status()).isEqualTo(401);
+        assertThat(client.login("adminprueba", "ñ".repeat(37)).status()).isEqualTo(401);
+        assertThat(client.login("adminprueba", "ClaveDePrueba-2026").status()).isEqualTo(200);
+    }
+
+    @Test void rechazaFormatosDeLoginAmbiguos() throws Exception {
+        var csrf = client.pedir("GET", "/api/auth/csrf", null).datos();
+        var header = csrf.get("headerName").asText();
+        var token = csrf.get("token").asText();
+        assertThat(client.raw("POST", "/api/auth/login", "{}",
+            Map.of("Content-Type", "application/json", header, token)).status()).isEqualTo(415);
+        assertThat(client.raw("POST", "/api/auth/login", "usuario=adminprueba&usuario=otro&contrasena=Incorrecta-2026",
+            Map.of("Content-Type", "application/x-www-form-urlencoded", header, token)).status()).isEqualTo(401);
+        assertThat(client.pedir("GET", "/api/auth/me", null).status()).isEqualTo(401);
     }
 }
