@@ -61,3 +61,12 @@ CREATE TABLE IF NOT EXISTS detalle_venta (
     FOREIGN KEY (id_venta) REFERENCES venta(id_venta),
     FOREIGN KEY (id_funcion) REFERENCES funcion(id_funcion)
 );
+
+CREATE TABLE IF NOT EXISTS registro_cinemax (
+    id BIGSERIAL PRIMARY KEY,
+    hora TIMESTAMP NOT NULL,
+    nivel VARCHAR(255) NOT NULL,
+    modulo VARCHAR(255) NOT NULL,
+    accion VARCHAR(255) NOT NULL,
+    informacion TEXT NOT NULL
+);
