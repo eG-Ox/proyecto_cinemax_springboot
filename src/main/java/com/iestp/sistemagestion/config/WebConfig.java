@@ -7,6 +7,9 @@ public class WebConfig implements WebMvcConfigurer {
     private final String[] origins;
     public WebConfig(@Value("${cinemax.cors.origins}") String[] origins) { this.origins=origins; }
     @Override public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**").allowedOrigins(origins).allowedMethods("GET","POST","PUT","DELETE","OPTIONS").allowedHeaders("*");
+        registry.addMapping("/api/**").allowedOrigins(origins)
+            .allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
+            .allowedHeaders("Content-Type", "X-CSRF-TOKEN")
+            .allowCredentials(true).maxAge(300);
     }
 }

@@ -1,8 +1,6 @@
 package com.iestp.sistemagestion;
 
 import com.iestp.sistemagestion.dao.*;
-import java.net.URI;
-import java.net.http.*;
 import java.util.*;
 import java.util.concurrent.*;
 import org.junit.jupiter.api.*;
@@ -20,7 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
     "spring.datasource.driver-class-name=org.h2.Driver",
     "spring.datasource.username=sa",
     "spring.datasource.password=",
-    "spring.jpa.hibernate.ddl-auto=create-drop"
+    "spring.jpa.hibernate.ddl-auto=create-drop",
+    "cinemax.security.admin.username=adminprueba",
+    "cinemax.security.admin.password=ClaveDePrueba-2026"
 })
 class CinemaxApplicationTests {
     @Value("${local.server.port}") int port;
@@ -32,21 +32,20 @@ class CinemaxApplicationTests {
     @Autowired PeliculaRepository peliculas;
     @Autowired UsuarioRepository usuarios;
     @Autowired RegistroRepository registros;
-    final HttpClient client=HttpClient.newHttpClient();
+    ClienteApi client;
     int usuario, pelicula, sala, funcion;
 
     record Respuesta(int status, JsonNode datos) { }
     Respuesta pedir(String metodo,String ruta,Object body) throws Exception {
-        var builder=HttpRequest.newBuilder(URI.create("http://localhost:"+port+"/api"+ruta));
-        builder.header("Content-Type","application/json");
-        builder.method(metodo,body==null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(json.writeValueAsString(body)));
-        var response=client.send(builder.build(),HttpResponse.BodyHandlers.ofString());
-        return new Respuesta(response.statusCode(),json.readTree(response.body()));
+        var response=client.pedir(metodo,"/api"+ruta,body);
+        return new Respuesta(response.status(),response.datos());
     }
     JsonNode crear(String ruta,Object body) throws Exception {
         var r=pedir("POST",ruta,body); assertThat(r.status()).as(r.datos().toString()).isEqualTo(201); return r.datos();
     }
     @BeforeEach void preparar() throws Exception {
+        client=new ClienteApi(port,json);
+        assertThat(client.login("adminprueba","ClaveDePrueba-2026").status()).isEqualTo(200);
         detalles.deleteAllInBatch(); ventas.deleteAllInBatch(); funciones.deleteAllInBatch();
         salas.deleteAllInBatch(); peliculas.deleteAllInBatch(); usuarios.deleteAllInBatch(); registros.deleteAllInBatch();
         usuario=crear("/usuarios/",Map.of("nombres_usuario","Ana Prueba","correo","ana@example.com")).get("id").asInt();
