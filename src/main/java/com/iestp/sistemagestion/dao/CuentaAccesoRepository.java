@@ -7,4 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface CuentaAccesoRepository extends JpaRepository<CuentaAcceso, Long> {
     Optional<CuentaAcceso> findByUsuario(String usuario);
     boolean existsByUsuario(String usuario);
+    boolean existsByUsuarioAndHabilitadaTrue(String usuario);
 }

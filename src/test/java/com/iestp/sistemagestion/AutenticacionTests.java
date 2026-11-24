@@ -74,6 +74,25 @@ class AutenticacionTests {
         assertThat(r.datos().get("detail").asText()).isEqualTo("Usuario o contrasena incorrectos");
     }
 
+    @Test void deshabilitarLaCuentaRevocaLasSesionesYaAbiertas() throws Exception {
+        assertThat(client.login("adminprueba", "ClaveDePrueba-2026").status()).isEqualTo(200);
+        var segundaSesion = new ClienteApi(port, mapper);
+        assertThat(segundaSesion.login("adminprueba", "ClaveDePrueba-2026").status()).isEqualTo(200);
+        var cuenta = cuentas.findByUsuario("adminprueba").orElseThrow();
+        cuenta.setHabilitada(false);
+        cuentas.saveAndFlush(cuenta);
+        assertThat(client.pedir("GET", "/api/usuarios", null).status()).isEqualTo(401);
+        assertThat(segundaSesion.pedir("GET", "/api/auth/me", null).status()).isEqualTo(401);
+    }
+
+    @Test void elTokenCsrfAnteriorAlLoginNoAutorizaEscrituras() throws Exception {
+        var csrf = client.pedir("GET", "/api/auth/csrf", null).datos();
+        assertThat(client.login("adminprueba", "ClaveDePrueba-2026").status()).isEqualTo(200);
+        assertThat(client.raw("DELETE", "/api/registros", null,
+            Map.of(csrf.get("headerName").asText(), csrf.get("token").asText())).status()).isEqualTo(403);
+        assertThat(client.pedir("DELETE", "/api/registros", null).status()).isEqualTo(200);
+    }
+
     @Test void csrfProtegeLoginYEscriturasAunqueExistaSesion() throws Exception {
         assertThat(client.raw("POST", "/api/auth/login", "usuario=adminprueba&contrasena=ClaveDePrueba-2026",
             Map.of("Content-Type", "application/x-www-form-urlencoded")).status()).isEqualTo(403);
